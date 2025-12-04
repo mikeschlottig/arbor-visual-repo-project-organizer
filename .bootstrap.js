@@ -77,7 +77,11 @@ function updateWranglerJsonc() {
 }
 
 function runSetupCommands() {
-    const commands = [];
+    const commands = [
+    "bun add sql.js@^1.10.0",
+    "bun add localforage@^1.10.0",
+    "bun add react-syntax-highlighter@^15.5.0"
+];
     
     if (commands.length === 0) {
         console.log('⊘ No setup commands to run');
