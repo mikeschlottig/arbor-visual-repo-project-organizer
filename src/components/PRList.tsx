@@ -28,7 +28,7 @@ function PRCard({ pr, onMerge }: { pr: PR; onMerge: (prId: string) => void }) {
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.2 }}
     >
-      <Card>
+      <Card className="hover:shadow-md transition-shadow">
         <CardHeader>
           <div className="flex justify-between items-start">
             <CardTitle className="text-base font-semibold pr-4">{pr.title}</CardTitle>
@@ -41,12 +41,12 @@ function PRCard({ pr, onMerge }: { pr: PR; onMerge: (prId: string) => void }) {
             #{pr.number} opened {formatDistanceToNow(new Date(pr.createdAt), { addSuffix: true })}
           </CardDescription>
         </CardHeader>
-        <CardContent className="text-sm">
-          <p className="text-muted-foreground">
+        <CardContent className="text-sm space-y-2">
+          <div className="text-muted-foreground">
             <Badge variant="secondary" className="font-mono">{pr.sourceBranch}</Badge> → <Badge variant="secondary" className="font-mono">{pr.targetBranch}</Badge>
-          </p>
+          </div>
           {pr.conflicts && (
-            <div className="mt-2 flex items-center text-destructive text-xs font-medium">
+            <div className="flex items-center text-destructive text-xs font-medium">
               <AlertTriangle className="h-4 w-4 mr-1" /> Conflicts detected
             </div>
           )}
@@ -79,17 +79,17 @@ export function PRList({ prs, onMerge }: PRListProps) {
       <div className="mt-4 space-y-4">
         <TabsContent value="open">
           <div className="space-y-3">
-            {openPRs.map(pr => <PRCard key={pr.id} pr={pr} onMerge={onMerge} />)}
+            {openPRs.length > 0 ? openPRs.map(pr => <PRCard key={pr.id} pr={pr} onMerge={onMerge} />) : <p className="text-sm text-muted-foreground text-center py-4">No open pull requests.</p>}
           </div>
         </TabsContent>
         <TabsContent value="merged">
           <div className="space-y-3">
-            {mergedPRs.map(pr => <PRCard key={pr.id} pr={pr} onMerge={onMerge} />)}
+            {mergedPRs.length > 0 ? mergedPRs.map(pr => <PRCard key={pr.id} pr={pr} onMerge={onMerge} />) : <p className="text-sm text-muted-foreground text-center py-4">No merged pull requests.</p>}
           </div>
         </TabsContent>
         <TabsContent value="closed">
           <div className="space-y-3">
-            {closedPRs.map(pr => <PRCard key={pr.id} pr={pr} onMerge={onMerge} />)}
+            {closedPRs.length > 0 ? closedPRs.map(pr => <PRCard key={pr.id} pr={pr} onMerge={onMerge} />) : <p className="text-sm text-muted-foreground text-center py-4">No closed pull requests.</p>}
           </div>
         </TabsContent>
       </div>

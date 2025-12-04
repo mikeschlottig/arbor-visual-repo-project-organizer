@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { GitBranch, GitCommit, Home, Loader2, ChevronsUpDown, Plus, Download, BarChart2, Search, BrainCircuit } from 'lucide-react';
+import { GitBranch, GitCommit, Home, Loader2, ChevronsUpDown, Plus, Download, BarChart2, Search, BrainCircuit, Upload } from 'lucide-react';
 import { format } from 'date-fns';
 import { Toaster, toast } from 'sonner';
 import { api } from '@/lib/api-client';
@@ -23,6 +23,7 @@ import { MOCK_USERS } from '@shared/mock-data';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { AIAssistant } from '@/components/AIAssistant';
+import { ImportComponent } from '@/components/ImportComponent';
 export default function RepoView() {
   const { repoId } = useParams<{ repoId: string }>();
   const navigate = useNavigate();
@@ -111,9 +112,9 @@ export default function RepoView() {
   };
   if (isLoading) {
     return (
-      <div className="p-4 max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12">
         <Skeleton className="h-8 w-1/2 mb-4" />
-        <div className="flex h-[calc(100vh-100px)] border rounded-lg">
+        <div className="flex h-[calc(100vh-150px)] border rounded-lg">
           <Skeleton className="w-64 h-full" />
           <Skeleton className="flex-1 h-full" />
         </div>
@@ -142,7 +143,7 @@ export default function RepoView() {
       </header>
       <main className="flex-grow overflow-hidden">
         <ResizablePanelGroup direction="horizontal" className="h-full">
-          <ResizablePanel defaultSize={20} minSize={15} className="p-2 flex flex-col">
+          <ResizablePanel defaultSize={25} minSize={15} className="p-2 flex flex-col">
             <div className="p-2 space-y-4">
               <Popover open={branchPopoverOpen} onOpenChange={setBranchPopoverOpen}>
                 <PopoverTrigger asChild>
@@ -172,13 +173,16 @@ export default function RepoView() {
             </ScrollArea></div>
           </ResizablePanel>
           <ResizableHandle withHandle />
-          <ResizablePanel defaultSize={55} minSize={30}>
+          <ResizablePanel defaultSize={75} minSize={25}>
             <Tabs defaultValue="files" className="h-full flex flex-col">
                 <div className="px-4 pt-4">
                     <TabsList>
                         <TabsTrigger value="files">Files</TabsTrigger>
                         <TabsTrigger value="prs">Pull Requests <Badge variant="secondary" className="ml-2">{repo.prs.length}</Badge></TabsTrigger>
                         <TabsTrigger value="issues">Issues <Badge variant="secondary" className="ml-2">{repo.issues.length}</Badge></TabsTrigger>
+                        <TabsTrigger value="import" className="flex items-center gap-1">
+                          <Upload className="h-4 w-4" /> Import
+                        </TabsTrigger>
                         <TabsTrigger value="ai" className="flex items-center gap-1">
                           <BrainCircuit className="h-4 w-4" /> AI
                         </TabsTrigger>
@@ -187,6 +191,9 @@ export default function RepoView() {
                 <TabsContent value="files" className="flex-grow overflow-auto p-4"><FileViewer file={selectedFile} /></TabsContent>
                 <TabsContent value="prs" className="flex-grow overflow-auto p-4"><PRList prs={repo.prs} onMerge={handleMergePR} /></TabsContent>
                 <TabsContent value="issues" className="flex-grow overflow-auto p-4"><p>Issues view coming soon.</p></TabsContent>
+                <TabsContent value="import" className="flex-grow overflow-auto p-4">
+                  <ImportComponent repo={repo} fileTree={fileTree} onTreeUpdate={setFileTree} currentDirId={selectedFile?.parentId || fileTree?.id || 'root'} />
+                </TabsContent>
                 <TabsContent value="ai" className="flex-grow overflow-auto">
                   <AIAssistant repo={repo} fileTree={fileTree} selectedFile={selectedFile} />
                 </TabsContent>
