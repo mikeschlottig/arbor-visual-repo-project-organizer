@@ -19,9 +19,9 @@ import FileViewer from '@/components/FileViewer';
 import { NotificationBell } from '@/components/NotificationBell';
 import { PRList } from '@/components/PRList';
 import { PRModal } from '@/components/PRModal';
-import { MOCK_USERS } from '@shared/mock-data';
+import { MOCK_USERS } from '@shared/mock-data';interface BadgeProps {children?: React.ReactNode;className?: string;style?: React.CSSProperties;[key: string]: unknown;}interface BadgeProps {children?: React.ReactNode;className?: string;style?: React.CSSProperties;[key: string]: unknown;}interface BadgeProps {children?: React.ReactNode;className?: string;style?: React.CSSProperties;[key: string]: unknown;}interface BadgeProps {children?: React.ReactNode;className?: string;style?: React.CSSProperties;[key: string]: unknown;}
 export default function RepoView() {
-  const { repoId } = useParams<{ repoId: string }>();
+  const { repoId } = useParams<{repoId: string;}>();
   const [repo, setRepo] = useState<Repo | null>(null);
   const [currentBranch, setCurrentBranch] = useState<Branch | null>(null);
   const [currentCommit, setCurrentCommit] = useState<Commit | null>(null);
@@ -30,17 +30,17 @@ export default function RepoView() {
   const [isLoading, setIsLoading] = useState(true);
   const [branchPopoverOpen, setBranchPopoverOpen] = useState(false);
   const [isPRModalOpen, setIsPRModalOpen] = useState(false);
-  const [users] = useState<User[]>(MOCK_USERS); // Mock users for comments
+  const [users] = useState<User[]>(MOCK_USERS);
   const fetchRepoData = async () => {
     if (!repoId) return;
     try {
       const repoData = await api<Repo>(`/api/repos/${repoId}`);
       setRepo(repoData);
       if (!currentBranch) {
-        const mainBranch = repoData.branches.find(b => b.name === repoData.defaultBranch);
+        const mainBranch = repoData.branches.find((b) => b.name === repoData.defaultBranch);
         if (mainBranch) {
           setCurrentBranch(mainBranch);
-          const mainCommit = repoData.commits.find(c => c.id === mainBranch.commitId);
+          const mainCommit = repoData.commits.find((c) => c.id === mainBranch.commitId);
           if (mainCommit) {
             setCurrentCommit(mainCommit);
             setFileTree(mainCommit.tree);
@@ -62,10 +62,10 @@ export default function RepoView() {
     return repo?.commits.sort((a, b) => b.timestamp - a.timestamp) ?? [];
   }, [repo]);
   const handleBranchSelect = (branchName: string) => {
-    const branch = repo?.branches.find(b => b.name === branchName);
+    const branch = repo?.branches.find((b) => b.name === branchName);
     if (branch && repo) {
       setCurrentBranch(branch);
-      const commit = repo.commits.find(c => c.id === branch.commitId);
+      const commit = repo.commits.find((c) => c.id === branch.commitId);
       if (commit) {
         setCurrentCommit(commit);
         setFileTree(commit.tree);
@@ -75,18 +75,18 @@ export default function RepoView() {
     setBranchPopoverOpen(false);
   };
   const handlePRCreated = (newPR: PR) => {
-    setRepo(prev => prev ? { ...prev, prs: [newPR, ...prev.prs] } : null);
+    setRepo((prev) => prev ? { ...prev, prs: [newPR, ...prev.prs] } : null);
   };
   const handleMergePR = async (prId: string) => {
     if (!repo) return;
     const promise = api(`/api/repos/${repo.id}/prs/${prId}/merge`, {
-        method: 'PUT',
-        headers: { 'X-User-Id': 'u1' } // Mock user
+      method: 'PUT',
+      headers: { 'X-User-Id': 'u1' }
     }).then(() => fetchRepoData());
     toast.promise(promise, {
-        loading: 'Merging pull request...',
-        success: 'Pull request merged successfully!',
-        error: 'Failed to merge pull request.',
+      loading: 'Merging pull request...',
+      success: 'Pull request merged successfully!',
+      error: 'Failed to merge pull request.'
     });
   };
   if (isLoading) {
@@ -97,8 +97,8 @@ export default function RepoView() {
           <Skeleton className="w-64 h-full" />
           <Skeleton className="flex-1 h-full" />
         </div>
-      </div>
-    );
+      </div>);
+
   }
   if (!repo) {
     return <div className="p-8 text-center">Repository not found.</div>;
@@ -131,7 +131,7 @@ export default function RepoView() {
                 </PopoverTrigger>
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0"><Command>
                     <CommandInput placeholder="Search branch..." /><CommandList><CommandEmpty>No branch found.</CommandEmpty><CommandGroup>
-                        {repo.branches.map((branch) => (<CommandItem key={branch.name} value={branch.name} onSelect={() => handleBranchSelect(branch.name)}>{branch.name}</CommandItem>))}
+                        {repo.branches.map((branch) => <CommandItem key={branch.name} value={branch.name} onSelect={() => handleBranchSelect(branch.name)}>{branch.name}</CommandItem>)}
                     </CommandGroup></CommandList>
                 </Command></PopoverContent>
               </Popover>
@@ -140,7 +140,7 @@ export default function RepoView() {
               </Button>
             </div>
             <div className="border-t mt-2 pt-2 flex-grow"><ScrollArea className="h-full">
-                {fileTree ? (<FileTreeComponent tree={fileTree} onSelectFile={setSelectedFile} selectedFileId={selectedFile?.id} />) : (<div className="p-4 text-sm text-muted-foreground">No files in this commit.</div>)}
+                {fileTree ? <FileTreeComponent tree={fileTree} onSelectFile={setSelectedFile} selectedFileId={selectedFile?.id} /> : <div className="p-4 text-sm text-muted-foreground">No files in this commit.</div>}
             </ScrollArea></div>
           </ResizablePanel>
           <ResizableHandle withHandle />
@@ -162,6 +162,6 @@ export default function RepoView() {
       </main>
       <PRModal isOpen={isPRModalOpen} onOpenChange={setIsPRModalOpen} repo={repo} onPRCreated={handlePRCreated} />
       <Toaster richColors />
-    </div>
-  );
+    </div>);
+
 }
