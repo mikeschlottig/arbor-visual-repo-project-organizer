@@ -1,5 +1,5 @@
 import { api } from './api-client';
-import type { Repo, StorageAdapter, StorageAdapterName, Commit, FileTree } from '@shared/types';
+import type { Repo, StorageAdapter, StorageAdapterName } from '@shared/types';
 import localforage from 'localforage';
 // Configure localforage for IndexedDB
 localforage.config({
@@ -48,31 +48,19 @@ class LocalAdapter implements StorageAdapter {
   async createRepo(repoData: { name: string; description: string }): Promise<Repo> {
     const repos = await this.getRepos();
     const now = Date.now();
-    const initialTree: FileTree = { id: crypto.randomUUID(), name: 'root', path: '/', type: 'folder', parentId: null, createdAt: now, updatedAt: now, children: [] };
-    const initialCommit: Commit = { id: crypto.randomUUID(), message: 'Initial commit', timestamp: now, author: { name: 'Local User', email: 'local@arbor.dev' }, tree: initialTree };
-    // Mock AI auto-tagging
-    const aiTags: string[] = [];
-    if (repoData.name.toLowerCase().includes('ui') || repoData.description.toLowerCase().includes('design')) {
-        aiTags.push('design-system');
-    }
-    if (repoData.name.toLowerCase().includes('api') || repoData.description.toLowerCase().includes('backend')) {
-        aiTags.push('backend');
-    }
     const newRepo: Repo = {
       id: repoData.name.toLowerCase().replace(/\s+/g, '-'),
       name: repoData.name,
       description: repoData.description,
-      tags: aiTags,
+      tags: [],
       createdAt: now,
       updatedAt: now,
       defaultBranch: 'main',
-      branches: [{ name: 'main', commitId: initialCommit.id }],
-      commits: [initialCommit],
+      branches: [],
+      commits: [],
       issues: [],
-      prs: [],
-      comments: [],
-      roles: {},
     };
+    // In a real sql.js implementation, this would be an INSERT statement.
     const updatedRepos = [...repos, newRepo];
     await localforage.setItem(this.REPOS_KEY, updatedRepos);
     return newRepo;

@@ -88,3 +88,29 @@ export interface Repo {
   commits: Commit[];
   issues: Issue[];
 }
+// --- Storage & Sync Types ---
+export type StorageAdapterName = 'do' | 'local' | 'd1';
+export interface StorageAdapter {
+  name: StorageAdapterName;
+  getRepos: () => Promise<Repo[]>;
+  getRepo: (id: string) => Promise<Repo | null>;
+  createRepo: (repoData: { name: string; description: string }) => Promise<Repo>;
+  // Add other methods as needed: updateRepo, deleteRepo, etc.
+}
+export type SyncStatus = 'pending' | 'synced' | 'conflict';
+export type SyncOperation = 'create' | 'update' | 'delete';
+export interface SyncQueueItem {
+  id: string;
+  entity: 'repo' | 'commit' | 'branch' | 'issue';
+  entityId: string;
+  operation: SyncOperation;
+  payload: any;
+  timestamp: number;
+  status: SyncStatus;
+}
+export interface Conflict {
+  queueItemId: string;
+  localVersion: any;
+  remoteVersion: any;
+  resolved?: boolean;
+}

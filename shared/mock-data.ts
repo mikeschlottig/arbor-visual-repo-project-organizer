@@ -1,4 +1,4 @@
-import type { User, Chat, ChatMessage, Repo, FileTree, Commit, Branch, Issue } from './types';
+import type { User, Chat, ChatMessage, Repo, FileTree, Commit, Branch, Issue, VFSFile, VFSFolder } from './types';
 export const MOCK_USERS: User[] = [
   { id: 'u1', name: 'Ada Lovelace' },
   { id: 'u2', name: 'Grace Hopper' }
@@ -31,8 +31,9 @@ const MOCK_TREE_1: FileTree = {
       tags: [],
       createdAt: now,
       updatedAt: now,
-      content: '# Project Phoenix\nThis is the main readme for the project.'
-    },
+      content: '# Project Phoenix\nThis is the main readme for the project.',
+      contentPreview: '# Project Phoenix'
+    } as VFSFile,
     {
       id: 'folder-1-1',
       name: 'src',
@@ -53,10 +54,11 @@ const MOCK_TREE_1: FileTree = {
           tags: [],
           createdAt: now,
           updatedAt: now,
-          content: 'console.log("hello world");'
-        }
+          content: 'console.log("hello world");',
+          contentPreview: 'console.log(...)'
+        } as VFSFile
       ]
-    }
+    } as VFSFolder
   ]
 };
 const MOCK_COMMIT_1: Commit = {
@@ -129,8 +131,9 @@ const MOCK_REPOS: Repo[] = [
                 tags: [],
                 createdAt: now,
                 updatedAt: now,
-                content: 'export const Button = () => <button>Click me</button>;'
-            }
+                content: 'export const Button = () => <button>Click me</button>;',
+                contentPreview: 'export const Button...'
+            } as VFSFile
         ]
       }
     }],

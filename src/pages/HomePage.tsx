@@ -11,7 +11,8 @@ import { Toaster, toast } from 'sonner';
 import { api } from '@/lib/api-client';
 import type { Repo } from '@shared/types';
 import { RepoCard } from '@/components/RepoCard';
-import { Skeleton } from '@/components/ui/skeleton';interface Card {id?: string | number;[key: string]: unknown;}interface CardFooterProps {children?: React.ReactNode;className?: string;style?: React.CSSProperties;[key: string]: unknown;}interface CardFooterProps {children?: React.ReactNode;className?: string;style?: React.CSSProperties;[key: string]: unknown;}interface CardContentProps {children?: React.ReactNode;className?: string;style?: React.CSSProperties;[key: string]: unknown;}interface CardContentProps {children?: React.ReactNode;className?: string;style?: React.CSSProperties;[key: string]: unknown;}interface CardHeaderProps {children?: React.ReactNode;className?: string;style?: React.CSSProperties;[key: string]: unknown;}interface CardHeaderProps {children?: React.ReactNode;className?: string;style?: React.CSSProperties;[key: string]: unknown;}interface CardProps {children?: React.ReactNode;className?: string;style?: React.CSSProperties;[key: string]: unknown;}
+import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 export function HomePage() {
   const [repos, setRepos] = useState<Repo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -70,7 +71,6 @@ export function HomePage() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}>
-
             <div className="absolute top-0 left-0 right-0 h-[400px] bg-gradient-to-b from-orange-100/50 to-transparent dark:from-indigo-900/20 -z-10" />
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold font-display tracking-tighter">
               Arbor Repositories
@@ -90,7 +90,6 @@ export function HomePage() {
                 className="pl-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)} />
-
             </div>
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
               <SheetTrigger asChild>
@@ -142,7 +141,6 @@ export function HomePage() {
                 </Card>
             )}
             </div> :
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredRepos.map((repo) =>
             <RepoCard key={repo.id} repo={repo} />
@@ -156,5 +154,4 @@ export function HomePage() {
       </footer>
       <Toaster richColors />
     </div>);
-
 }

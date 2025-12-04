@@ -12,6 +12,7 @@ import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import '@/index.css'
 import { HomePage } from '@/pages/HomePage'
 import RepoView from '@/pages/RepoView';
+import SettingsPage from '@/pages/SettingsPage';
 const router = createBrowserRouter([
   {
     path: "/",
@@ -21,6 +22,11 @@ const router = createBrowserRouter([
   {
     path: "/repos/:repoId",
     element: <RepoView />,
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: "/settings",
+    element: <SettingsPage />,
     errorElement: <RouteErrorBoundary />,
   }
 ]);

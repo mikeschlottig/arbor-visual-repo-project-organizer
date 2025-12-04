@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import type { Env } from './core-utils';
 import { UserEntity, ChatBoardEntity, RepoEntity } from "./entities";
 import { ok, bad, notFound, isStr } from './core-utils';
-import type { Commit, FileTree, Repo } from "@shared/types";
+import type { Commit, FileTree, Repo, SyncQueueItem } from "@shared/types";
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
   app.get('/api/test', (c) => c.json({ success: true, data: { name: 'CF Workers Demo' }}));
   // USERS
@@ -151,6 +151,21 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     if (!await repo.exists()) return notFound(c, 'Repository not found');
     const newIssue = await repo.createIssue(title, body ?? '');
     return ok(c, newIssue);
+  });
+  // --- Sync Routes ---
+  app.post('/api/sync', async (c) => {
+    const items = (await c.req.json()) as SyncQueueItem[];
+    if (!Array.isArray(items)) return bad(c, 'Expected an array of sync items');
+    // In a real implementation, this would be a complex reconciliation process.
+    // For now, we'll just acknowledge the request.
+    console.log(`[SYNC] Received ${items.length} items to sync.`);
+    // Here you would iterate through items, use CAS operations with RepoEntity,
+    // and return conflicts if any are found.
+    return ok(c, { status: 'ok', conflicts: [] });
+  });
+  app.get('/api/sync/status', (c) => {
+    // This would check the status of a sync job, perhaps from a queue.
+    return ok(c, { status: 'idle', queueSize: 0 });
   });
   // DELETE: Users
   app.delete('/api/users/:id', async (c) => ok(c, { id: c.req.param('id'), deleted: await UserEntity.delete(c.env, c.req.param('id')) }));
