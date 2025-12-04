@@ -11,7 +11,7 @@ import { Toaster, toast } from 'sonner';
 import { api } from '@/lib/api-client';
 import type { Repo } from '@shared/types';
 import { RepoCard } from '@/components/RepoCard';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';interface Card {id?: string | number;[key: string]: unknown;}interface CardFooterProps {children?: React.ReactNode;className?: string;style?: React.CSSProperties;[key: string]: unknown;}interface CardFooterProps {children?: React.ReactNode;className?: string;style?: React.CSSProperties;[key: string]: unknown;}interface CardContentProps {children?: React.ReactNode;className?: string;style?: React.CSSProperties;[key: string]: unknown;}interface CardContentProps {children?: React.ReactNode;className?: string;style?: React.CSSProperties;[key: string]: unknown;}interface CardHeaderProps {children?: React.ReactNode;className?: string;style?: React.CSSProperties;[key: string]: unknown;}interface CardHeaderProps {children?: React.ReactNode;className?: string;style?: React.CSSProperties;[key: string]: unknown;}interface CardProps {children?: React.ReactNode;className?: string;style?: React.CSSProperties;[key: string]: unknown;}
 export function HomePage() {
   const [repos, setRepos] = useState<Repo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,9 +44,9 @@ export function HomePage() {
     try {
       const newRepo = await api<Repo>('/api/repos', {
         method: 'POST',
-        body: JSON.stringify({ name: newRepoName, description: newRepoDesc }),
+        body: JSON.stringify({ name: newRepoName, description: newRepoDesc })
       });
-      setRepos(prev => [newRepo, ...prev]);
+      setRepos((prev) => [newRepo, ...prev]);
       toast.success(`Repository "${newRepo.name}" created successfully!`);
       setNewRepoName('');
       setNewRepoDesc('');
@@ -57,9 +57,9 @@ export function HomePage() {
       setIsCreating(false);
     }
   };
-  const filteredRepos = repos.filter(repo =>
-    repo.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    repo.description.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredRepos = repos.filter((repo) =>
+  repo.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  repo.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -69,8 +69,8 @@ export function HomePage() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
+            transition={{ duration: 0.5 }}>
+
             <div className="absolute top-0 left-0 right-0 h-[400px] bg-gradient-to-b from-orange-100/50 to-transparent dark:from-indigo-900/20 -z-10" />
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold font-display tracking-tighter">
               Arbor Repositories
@@ -89,8 +89,8 @@ export function HomePage() {
                 placeholder="Search repositories..."
                 className="pl-10"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+                onChange={(e) => setSearchTerm(e.target.value)} />
+
             </div>
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
               <SheetTrigger asChild>
@@ -108,11 +108,11 @@ export function HomePage() {
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="name" className="text-right">Name</Label>
-                    <Input id="name" value={newRepoName} onChange={e => setNewRepoName(e.target.value)} className="col-span-3" placeholder="my-awesome-project" />
+                    <Input id="name" value={newRepoName} onChange={(e) => setNewRepoName(e.target.value)} className="col-span-3" placeholder="my-awesome-project" />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="description" className="text-right">Description</Label>
-                    <Textarea id="description" value={newRepoDesc} onChange={e => setNewRepoDesc(e.target.value)} className="col-span-3" placeholder="A short description of your project." />
+                    <Textarea id="description" value={newRepoDesc} onChange={(e) => setNewRepoDesc(e.target.value)} className="col-span-3" placeholder="A short description of your project." />
                   </div>
                 </div>
                 <SheetFooter>
@@ -124,10 +124,10 @@ export function HomePage() {
               </SheetContent>
             </Sheet>
           </div>
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Card key={i}>
+          {isLoading ?
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 3 }).map((_, i) =>
+            <Card key={i}>
                   <CardHeader>
                     <Skeleton className="h-6 w-3/4" />
                     <Skeleton className="h-4 w-full mt-2" />
@@ -140,21 +140,21 @@ export function HomePage() {
                     <Skeleton className="h-4 w-1/3" />
                   </CardFooter>
                 </Card>
-              ))}
+            )}
+            </div> :
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredRepos.map((repo) =>
+            <RepoCard key={repo.id} repo={repo} />
+            )}
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredRepos.map(repo => (
-                <RepoCard key={repo.id} repo={repo} />
-              ))}
-            </div>
-          )}
+          }
         </div>
       </main>
       <footer className="text-center py-6 text-sm text-muted-foreground border-t">
         Built with ❤️ at Cloudflare
       </footer>
       <Toaster richColors />
-    </div>
-  );
+    </div>);
+
 }
