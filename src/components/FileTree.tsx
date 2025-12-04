@@ -16,12 +16,12 @@ const FileTree: React.FC<FileTreeProps> = ({ tree, onSelectFile, selectedFileId,
   return (
     <div className="text-sm">
       <ul>
-        {filteredChildren.sort((a, b) => {
+        {filteredChildren.sort((a: FileNode, b: FileNode) => {
           if (a.type === 'folder' && b.type === 'file') return -1;
           if (a.type === 'file' && b.type === 'folder') return 1;
           return a.name.localeCompare(b.name);
         }).map(node => (
-          <Node key={node.id} node={node} onSelectFile={onSelectFile} selectedFileId={selectedFileId} depth={0} searchQuery={searchQuery} />
+          <Node key={node.id} node={node as FileNode} onSelectFile={onSelectFile} selectedFileId={selectedFileId} depth={0} searchQuery={searchQuery} />
         ))}
       </ul>
     </div>
@@ -79,7 +79,7 @@ const Node: React.FC<NodeProps> = ({ node, onSelectFile, selectedFileId, depth, 
                 if (a.type === 'file' && b.type === 'folder') return 1;
                 return a.name.localeCompare(b.name);
             }).map(child => (
-              <Node key={child.id} node={child} onSelectFile={onSelectFile} selectedFileId={selectedFileId} depth={depth + 1} searchQuery={searchQuery} />
+              <Node key={child.id} node={child as FileNode} onSelectFile={onSelectFile} selectedFileId={selectedFileId} depth={depth + 1} searchQuery={searchQuery} />
             ))}
           </motion.ul>
         )}

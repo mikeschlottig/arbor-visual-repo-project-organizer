@@ -6,8 +6,8 @@ import type { Commit, FileTree, Repo, SyncQueueItem, PR, Comment, VFSFile, VFSFo
 const flattenTree = (node: FileNode, allFiles: VFSFile[] = []): VFSFile[] => {
     if (node.type === 'file') {
         allFiles.push(node as VFSFile);
-    } else if (node.type === 'folder' && 'children' in node) {
-        (node as VFSFolder).children.forEach(child => flattenTree(child, allFiles));
+    } else if (node.type === 'folder' && 'children' in node && Array.isArray(node.children)) {
+        (node as VFSFolder).children.forEach(child => flattenTree(child as FileNode, allFiles));
     }
     return allFiles;
 };
@@ -139,8 +139,8 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     if (!q) return bad(c, 'Query parameter "q" is required');
     await RepoEntity.ensureSeed(c.env);
     const allRepos = await RepoEntity.list(c.env, null, 1000); // Fetch all for local filtering
-    const results = allRepos.items.filter(r => 
-        r.name.toLowerCase().includes(q) || 
+    const results = allRepos.items.filter(r =>
+        r.name.toLowerCase().includes(q) ||
         r.description.toLowerCase().includes(q) ||
         r.tags.some(t => t.toLowerCase().includes(q))
     );
@@ -161,8 +161,8 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const latestCommit = state.commits.sort((a,b) => b.timestamp - a.timestamp)[0];
     if (!latestCommit) return ok(c, []);
     const allFiles = flattenTree(latestCommit.tree);
-    const matches = allFiles.filter(f => 
-        f.name.toLowerCase().includes(q) || 
+    const matches = allFiles.filter(f =>
+        f.name.toLowerCase().includes(q) ||
         (f.contentPreview || '').toLowerCase().includes(q)
     );
     return ok(c, matches.slice(0, 50));
