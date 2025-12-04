@@ -1,6 +1,6 @@
 import React from 'react';
-import SyntaxHighlighter from 'react-syntax-highlighter/dist/esm/default-highlight';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism/vsc-dark-plus';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { format } from 'date-fns';
 import { Code, FileText, Image as ImageIcon, Video, FileQuestion } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
