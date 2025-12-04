@@ -111,8 +111,8 @@ export function AIAssistant({ repo, selectedFile }: AIAssistantProps) {
                         <p className="font-semibold mb-2">AI Suggestion:</p>
                         <pre className="bg-muted p-2 rounded-md"><code>{JSON.stringify(msg.suggestion.payload, null, 2)}</code></pre>
                         <div className="flex gap-2 mt-2">
-                          <Button size="sm" onClick={() => handleSuggestion(msg.suggestion, true)}><Check className="h-3 w-3 mr-1" /> Approve</Button>
-                          <Button size="sm" variant="ghost" onClick={() => handleSuggestion(msg.suggestion, false)}><X className="h-3 w-3 mr-1" /> Reject</Button>
+                          <Button size="xs" onClick={() => handleSuggestion(msg.suggestion, true)}><Check className="h-3 w-3 mr-1" /> Approve</Button>
+                          <Button size="xs" variant="ghost" onClick={() => handleSuggestion(msg.suggestion, false)}><X className="h-3 w-3 mr-1" /> Reject</Button>
                         </div>
                       </CardContent>
                     </Card>

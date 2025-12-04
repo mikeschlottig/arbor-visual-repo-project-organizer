@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { GitBranch, GitCommit, Home, Loader2, ChevronsUpDown, Plus, Download, BarChart2, Search } from 'lucide-react';
+import { GitBranch, GitCommit, Home, Loader2, ChevronsUpDown, Plus, Download, BarChart2, Search, BrainCircuit } from 'lucide-react';
 import { format } from 'date-fns';
 import { Toaster, toast } from 'sonner';
 import { api } from '@/lib/api-client';
@@ -22,6 +22,7 @@ import { PRModal } from '@/components/PRModal';
 import { MOCK_USERS } from '@shared/mock-data';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { AIAssistant } from '@/components/AIAssistant';
 export default function RepoView() {
   const { repoId } = useParams<{ repoId: string }>();
   const navigate = useNavigate();
@@ -178,11 +179,17 @@ export default function RepoView() {
                         <TabsTrigger value="files">Files</TabsTrigger>
                         <TabsTrigger value="prs">Pull Requests <Badge variant="secondary" className="ml-2">{repo.prs.length}</Badge></TabsTrigger>
                         <TabsTrigger value="issues">Issues <Badge variant="secondary" className="ml-2">{repo.issues.length}</Badge></TabsTrigger>
+                        <TabsTrigger value="ai" className="flex items-center gap-1">
+                          <BrainCircuit className="h-4 w-4" /> AI
+                        </TabsTrigger>
                     </TabsList>
                 </div>
                 <TabsContent value="files" className="flex-grow overflow-auto p-4"><FileViewer file={selectedFile} /></TabsContent>
                 <TabsContent value="prs" className="flex-grow overflow-auto p-4"><PRList prs={repo.prs} onMerge={handleMergePR} /></TabsContent>
                 <TabsContent value="issues" className="flex-grow overflow-auto p-4"><p>Issues view coming soon.</p></TabsContent>
+                <TabsContent value="ai" className="flex-grow overflow-auto">
+                  <AIAssistant repo={repo} fileTree={fileTree} selectedFile={selectedFile} />
+                </TabsContent>
             </Tabs>
           </ResizablePanel>
         </ResizablePanelGroup>

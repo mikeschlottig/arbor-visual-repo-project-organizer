@@ -12,6 +12,7 @@ interface StorageState {
 interface StorageActions {
   setAdapterName: (name: StorageAdapterName) => void;
   queueSyncItem: (item: Omit<SyncQueueItem, 'id' | 'timestamp' | 'status'>) => void;
+  queueAIChange: (change: { entity: string; entityId: string; operation: 'edit' | 'add' | 'tag'; payload: any }) => void;
   processQueue: () => Promise<void>; // Placeholder for actual sync logic
   setConflicts: (conflicts: Conflict[]) => void;
   resolveConflict: (conflictId: string, resolution: 'local' | 'remote') => void;
@@ -34,6 +35,18 @@ export const useStorageStore = create<StorageState & StorageActions>()(
           id: crypto.randomUUID(),
           timestamp: Date.now(),
           status: 'pending',
+        };
+        set((state) => ({ syncQueue: [...state.syncQueue, newItem] }));
+      },
+      queueAIChange: (change) => {
+        const newItem: SyncQueueItem = {
+          id: crypto.randomUUID(),
+          entity: change.entity as any, // Cast for now, should extend SyncQueueItem entity type
+          entityId: change.entityId,
+          operation: change.operation as any,
+          payload: change.payload,
+          timestamp: Date.now(),
+          status: 'pending', // Using 'pending' as 'pending-approval' isn't in the type yet
         };
         set((state) => ({ syncQueue: [...state.syncQueue, newItem] }));
       },
