@@ -55,7 +55,7 @@ export function ImportComponent({ repo, fileTree, onTreeUpdate, currentDirId }: 
         const binaryStr = reader.result as string;
         setFiles(prev => prev.map(f => f.id === newFile.id ? { ...f, preview: binaryStr.substring(0, 200) + '...' } : f));
       };
-      if (file.type.startsWith('text/') || file.type === 'application/json') {
+      if (newFile.file.type.startsWith('text/') || newFile.file.type === 'application/json') {
         reader.readAsText(newFile.file);
       }
     });
@@ -145,7 +145,7 @@ export function ImportComponent({ repo, fileTree, onTreeUpdate, currentDirId }: 
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, x: -20 }}
               >
-                <Card className="flex items-center p-3 gap-3">
+                <Card className="flex items-center p-3 gap-3 hover:shadow-md transition-shadow">
                   <FileIcon mimeType={f.file.type} />
                   <div className="flex-grow">
                     <p className="text-sm font-medium truncate">{f.file.name}</p>
