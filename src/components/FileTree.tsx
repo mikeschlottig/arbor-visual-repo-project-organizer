@@ -61,7 +61,7 @@ const Node: React.FC<NodeProps> = ({ node, onSelectFile, selectedFileId, depth }
         <span className="truncate">{node.name}</span>
       </div>
       <AnimatePresence initial={false}>
-        {isFolder && isOpen && (
+        {isFolder && isOpen && 'children' in node && Array.isArray((node as VFSFolder).children) && (
           <motion.ul
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}

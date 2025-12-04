@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import type { Env } from './core-utils';
 import { UserEntity, ChatBoardEntity, RepoEntity } from "./entities";
 import { ok, bad, notFound, isStr } from './core-utils';
-import type { Commit, FileTree, Repo, SyncQueueItem } from "@shared/types";
+import type { Commit, FileTree, Repo, SyncQueueItem, PR, Comment } from "@shared/types";
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
   app.get('/api/test', (c) => c.json({ success: true, data: { name: 'CF Workers Demo' }}));
   // USERS
@@ -70,6 +70,9 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
       branches: [{ name: 'main', commitId: initialCommit.id }],
       commits: [initialCommit],
       issues: [],
+      prs: [],
+      comments: [],
+      roles: {},
     };
     const repoEntity = new RepoEntity(c.env, newRepo.id);
     if (await repoEntity.exists()) return bad(c, 'Repository with this name already exists');
@@ -82,105 +85,54 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     if (!await repo.exists()) return notFound(c, 'Repository not found');
     return ok(c, await repo.getState());
   });
-  // BRANCHES
-  app.get('/api/repos/:id/branches', async (c) => {
-    const { id } = c.req.param();
-    const repo = new RepoEntity(c.env, id);
+  // PULL REQUESTS
+  app.get('/api/repos/:id/prs', async (c) => {
+    const repo = new RepoEntity(c.env, c.req.param('id'));
     if (!await repo.exists()) return notFound(c, 'Repository not found');
     const state = await repo.getState();
-    return ok(c, state.branches);
+    return ok(c, state.prs);
   });
-  app.post('/api/repos/:id/branches', async (c) => {
+  app.post('/api/repos/:id/prs', async (c) => {
     const { id } = c.req.param();
-    const { newBranchName, fromBranchName } = (await c.req.json()) as { newBranchName?: string, fromBranchName?: string };
-    if (!isStr(newBranchName) || !isStr(fromBranchName)) return bad(c, 'newBranchName and fromBranchName are required');
+    const { sourceBranch, targetBranch, title, description } = (await c.req.json()) as Partial<PR>;
+    if (!isStr(sourceBranch) || !isStr(targetBranch) || !isStr(title)) return bad(c, 'sourceBranch, targetBranch, and title are required');
     const repo = new RepoEntity(c.env, id);
     if (!await repo.exists()) return notFound(c, 'Repository not found');
-    try {
-      const newBranch = await repo.createBranch(newBranchName, fromBranchName);
-      return ok(c, newBranch);
-    } catch (e: any) {
-      return bad(c, e.message);
-    }
+    const userId = c.req.header('X-User-Id') || 'u1'; // Mock user
+    if (!await repo.hasPermission(userId, 'editor')) return bad(c, 'Permission denied');
+    const pr = await repo.createPR(sourceBranch, targetBranch, title, description ?? '', userId);
+    return ok(c, pr);
   });
-  // COMMITS
-  app.get('/api/repos/:id/commits', async (c) => {
-    const { id } = c.req.param();
+  app.put('/api/repos/:id/prs/:prId/merge', async (c) => {
+    const { id, prId } = c.req.param();
     const repo = new RepoEntity(c.env, id);
     if (!await repo.exists()) return notFound(c, 'Repository not found');
-    const state = await repo.getState();
-    return ok(c, state.commits);
+    const userId = c.req.header('X-User-Id') || 'u1'; // Mock user
+    if (!await repo.hasPermission(userId, 'editor')) return bad(c, 'Permission denied');
+    const merged = await repo.mergePR(prId);
+    if (!merged) return bad(c, 'Merge failed. The PR may not be open or branches may not exist.');
+    return ok(c, { success: true });
   });
-  app.post('/api/repos/:id/commits', async (c) => {
+  // COMMENTS
+  app.post('/api/repos/:id/comments', async (c) => {
     const { id } = c.req.param();
-    const { branchName, message, tree } = (await c.req.json()) as { branchName?: string, message?: string, tree?: FileTree };
-    if (!isStr(branchName) || !isStr(message) || !tree) return bad(c, 'branchName, message, and tree are required');
+    const { entityId, text } = (await c.req.json()) as Partial<Comment>;
+    if (!isStr(entityId) || !isStr(text)) return bad(c, 'entityId and text are required');
     const repo = new RepoEntity(c.env, id);
     if (!await repo.exists()) return notFound(c, 'Repository not found');
-    try {
-      const newCommit = await repo.createCommit(branchName, message, tree);
-      return ok(c, newCommit);
-    } catch (e: any) {
-      return bad(c, e.message);
-    }
-  });
-  // TREE
-  app.get('/api/repos/:id/tree', async (c) => {
-    const { id } = c.req.param();
-    const commitId = c.req.query('commitId');
-    if (!isStr(commitId)) return bad(c, 'commitId query parameter is required');
-    const repo = new RepoEntity(c.env, id);
-    if (!await repo.exists()) return notFound(c, 'Repository not found');
-    const tree = await repo.getTree(commitId);
-    if (!tree) return notFound(c, 'Tree for that commit not found');
-    return ok(c, tree);
-  });
-  // ISSUES
-  app.get('/api/repos/:id/issues', async (c) => {
-    const { id } = c.req.param();
-    const repo = new RepoEntity(c.env, id);
-    if (!await repo.exists()) return notFound(c, 'Repository not found');
-    const state = await repo.getState();
-    return ok(c, state.issues);
-  });
-  app.post('/api/repos/:id/issues', async (c) => {
-    const { id } = c.req.param();
-    const { title, body } = (await c.req.json()) as { title?: string, body?: string };
-    if (!isStr(title)) return bad(c, 'Issue title is required');
-    const repo = new RepoEntity(c.env, id);
-    if (!await repo.exists()) return notFound(c, 'Repository not found');
-    const newIssue = await repo.createIssue(title, body ?? '');
-    return ok(c, newIssue);
+    const userId = c.req.header('X-User-Id') || 'u1'; // Mock user
+    if (!await repo.hasPermission(userId, 'editor')) return bad(c, 'Permission denied');
+    const comment = await repo.addComment(entityId, text, userId);
+    return ok(c, comment);
   });
   // --- Sync Routes ---
   app.post('/api/sync', async (c) => {
     const items = (await c.req.json()) as SyncQueueItem[];
     if (!Array.isArray(items)) return bad(c, 'Expected an array of sync items');
-    // In a real implementation, this would be a complex reconciliation process.
-    // For now, we'll just acknowledge the request.
     console.log(`[SYNC] Received ${items.length} items to sync.`);
-    // Here you would iterate through items, use CAS operations with RepoEntity,
-    // and return conflicts if any are found.
     return ok(c, { status: 'ok', conflicts: [] });
   });
   app.get('/api/sync/status', (c) => {
-    // This would check the status of a sync job, perhaps from a queue.
     return ok(c, { status: 'idle', queueSize: 0 });
-  });
-  // DELETE: Users
-  app.delete('/api/users/:id', async (c) => ok(c, { id: c.req.param('id'), deleted: await UserEntity.delete(c.env, c.req.param('id')) }));
-  app.post('/api/users/deleteMany', async (c) => {
-    const { ids } = (await c.req.json()) as { ids?: string[] };
-    const list = ids?.filter(isStr) ?? [];
-    if (list.length === 0) return bad(c, 'ids required');
-    return ok(c, { deletedCount: await UserEntity.deleteMany(c.env, list), ids: list });
-  });
-  // DELETE: Chats
-  app.delete('/api/chats/:id', async (c) => ok(c, { id: c.req.param('id'), deleted: await ChatBoardEntity.delete(c.env, c.req.param('id')) }));
-  app.post('/api/chats/deleteMany', async (c) => {
-    const { ids } = (await c.req.json()) as { ids?: string[] };
-    const list = ids?.filter(isStr) ?? [];
-    if (list.length === 0) return bad(c, 'ids required');
-    return ok(c, { deletedCount: await ChatBoardEntity.deleteMany(c.env, list), ids: list });
   });
 }

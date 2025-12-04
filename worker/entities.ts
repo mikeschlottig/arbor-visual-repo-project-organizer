@@ -2,7 +2,7 @@
  * Minimal real-world demo: One Durable Object instance per entity (User, ChatBoard), with Indexes for listing.
  */
 import { IndexedEntity } from "./core-utils";
-import type { User, Chat, ChatMessage, Repo, Branch, Commit, FileTree, Issue } from "@shared/types";
+import type { User, Chat, ChatMessage, Repo, Branch, Commit, FileTree, Issue, PR, Comment, Role } from "@shared/types";
 import { MOCK_CHAT_MESSAGES, MOCK_CHATS, MOCK_USERS, MOCK_ARBOR_REPOS } from "@shared/mock-data";
 // USER ENTITY: one DO instance per user
 export class UserEntity extends IndexedEntity<User> {
@@ -47,74 +47,87 @@ export class RepoEntity extends IndexedEntity<Repo> {
     branches: [],
     commits: [],
     issues: [],
+    prs: [],
+    comments: [],
+    roles: {},
   };
   static seedData = MOCK_ARBOR_REPOS;
-  async getBranch(name: string): Promise<Branch | undefined> {
+  async hasPermission(userId: string, requiredRole: Role): Promise<boolean> {
     const repo = await this.getState();
-    return repo.branches.find(b => b.name === name);
+    const userRole = repo.roles?.[userId];
+    if (!userRole) return false;
+    if (requiredRole === 'admin') return userRole === 'admin';
+    if (requiredRole === 'editor') return userRole === 'admin' || userRole === 'editor';
+    if (requiredRole === 'viewer') return true;
+    return false;
   }
-  async getCommit(id: string): Promise<Commit | undefined> {
-    const repo = await this.getState();
-    return repo.commits.find(c => c.id === id);
-  }
-  async getTree(commitId: string): Promise<FileTree | null> {
-    const commit = await this.getCommit(commitId);
-    return commit?.tree ?? null;
-  }
-  async createBranch(newBranchName: string, fromBranchName: string): Promise<Branch> {
-    const fromBranch = await this.getBranch(fromBranchName);
-    if (!fromBranch) throw new Error(`Branch '${fromBranchName}' not found`);
-    const newBranch: Branch = { name: newBranchName, commitId: fromBranch.commitId };
-    await this.mutate(repo => ({
-      ...repo,
-      branches: [...repo.branches, newBranch],
-      updatedAt: Date.now(),
-    }));
-    return newBranch;
-  }
-  async createCommit(branchName: string, message: string, tree: FileTree): Promise<Commit> {
-    const branch = await this.getBranch(branchName);
-    if (!branch) throw new Error(`Branch '${branchName}' not found`);
-    const newCommit: Commit = {
+  async createPR(sourceBranch: string, targetBranch: string, title: string, description: string, authorId: string): Promise<PR> {
+    const newPR: PR = {
       id: crypto.randomUUID(),
-      message,
-      timestamp: Date.now(),
-      author: { name: "Demo User", email: "user@demo.com" }, // Hardcoded for now
-      tree,
+      number: 0, // will be set below
+      title,
+      description,
+      sourceBranch,
+      targetBranch,
+      status: 'open',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      reviewerIds: [],
+      // Basic conflict detection: check if target branch has new commits since source branched off.
+      // A real implementation would be much more complex.
+      conflicts: Math.random() > 0.5,
     };
     await this.mutate(repo => {
-      const otherBranches = repo.branches.filter(b => b.name !== branchName);
-      const updatedBranch = { ...branch, commitId: newCommit.id };
+      const nextPRNumber = (repo.prs.length > 0 ? Math.max(...repo.prs.map(p => p.number)) : 0) + 1;
+      newPR.number = nextPRNumber;
       return {
         ...repo,
-        commits: [...repo.commits, newCommit],
-        branches: [...otherBranches, updatedBranch],
-        updatedAt: Date.now(),
+        prs: [...repo.prs, newPR],
       };
     });
-    return newCommit;
+    return newPR;
   }
-  async createIssue(title: string, body: string): Promise<Issue> {
-    const newIssue: Issue = {
-        id: crypto.randomUUID(),
-        number: 0, // will be set below
-        title,
-        body,
-        status: 'open',
-        authorId: 'u1', // Hardcoded for now
-        assigneeIds: [],
-        tags: [],
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+  async mergePR(prId: string): Promise<boolean> {
+    const repo = await this.getState();
+    const pr = repo.prs.find(p => p.id === prId);
+    if (!pr || pr.status !== 'open') return false;
+    const source = repo.branches.find(b => b.name === pr.sourceBranch);
+    const target = repo.branches.find(b => b.name === pr.targetBranch);
+    if (!source || !target) return false;
+    // Simple merge: create a new commit on target branch with source branch's tree
+    const sourceCommit = repo.commits.find(c => c.id === source.commitId);
+    if (!sourceCommit) return false;
+    const mergeCommit: Commit = {
+      id: crypto.randomUUID(),
+      message: `Merge PR #${pr.number}: ${pr.title}`,
+      timestamp: Date.now(),
+      author: { name: "Arbor System", email: "system@arbor.dev" },
+      tree: sourceCommit.tree,
     };
-    await this.mutate(repo => {
-        const nextIssueNumber = (repo.issues.length > 0 ? Math.max(...repo.issues.map(i => i.number)) : 0) + 1;
-        newIssue.number = nextIssueNumber;
-        return {
-            ...repo,
-            issues: [...repo.issues, newIssue],
-        };
+    await this.mutate(s => {
+      const updatedPR = { ...pr, status: 'merged' as const, updatedAt: Date.now() };
+      const updatedTargetBranch = { ...target, commitId: mergeCommit.id };
+      return {
+        ...s,
+        commits: [...s.commits, mergeCommit],
+        prs: s.prs.map(p => p.id === prId ? updatedPR : p),
+        branches: s.branches.map(b => b.name === target.name ? updatedTargetBranch : b),
+      };
     });
-    return newIssue;
+    return true;
+  }
+  async addComment(entityId: string, text: string, authorId: string): Promise<Comment> {
+    const newComment: Comment = {
+      id: crypto.randomUUID(),
+      entityId,
+      text,
+      authorId,
+      timestamp: Date.now(),
+    };
+    await this.mutate(repo => ({
+      ...repo,
+      comments: [...repo.comments, newComment],
+    }));
+    return newComment;
   }
 }

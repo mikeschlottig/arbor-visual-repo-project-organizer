@@ -13,11 +13,12 @@ export default {
   				'Roboto',
   				'sans-serif'
   			],
-			display: [
-				'Inter',
-				'system-ui',
-				'sans-serif'
-			],
+  			display: [
+  				'Cal Sans',
+  				'Inter',
+  				'system-ui',
+  				'sans-serif'
+  			],
   			mono: [
   				'JetBrains Mono',
   				'Fira Code',
@@ -139,7 +140,13 @@ export default {
   				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
-  			}
+  			},
+            pr: {
+                open: '#10b981',
+                merged: '#4F46E5',
+                closed: '#6b7280',
+                conflict: '#ef4444'
+            }
   		},
   		boxShadow: {
   			soft: '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
@@ -218,7 +225,11 @@ export default {
   				to: {
   					height: '0'
   				}
-  			}
+  			},
+            'diff-highlight': {
+                '0%': { backgroundColor: 'hsl(var(--destructive) / 0.2)' },
+                '100%': { backgroundColor: 'transparent' }
+            }
   		},
   		animation: {
   			'fade-in': 'fade-in 0.6s ease-out',
@@ -228,7 +239,8 @@ export default {
   			glow: 'glow 2s ease-in-out infinite',
   			float: 'float 3s ease-in-out infinite',
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+            'diff-highlight': 'diff-highlight 2s ease-out'
   		},
   		backgroundImage: {
   			'gradient-rainbow': 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%)',

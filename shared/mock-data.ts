@@ -1,4 +1,4 @@
-import type { User, Chat, ChatMessage, Repo, FileTree, Commit, Branch, Issue, VFSFile, VFSFolder } from './types';
+import type { User, Chat, ChatMessage, Repo, FileTree, Commit, Branch, Issue, VFSFile, VFSFolder, PR, Comment, Role } from './types';
 export const MOCK_USERS: User[] = [
   { id: 'u1', name: 'Ada Lovelace' },
   { id: 'u2', name: 'Grace Hopper' }
@@ -84,6 +84,53 @@ const MOCK_ISSUE_1: Issue = {
     createdAt: now - 1000 * 60 * 60 * 2,
     updatedAt: now - 1000 * 60 * 30,
 };
+const MOCK_PRS: PR[] = [
+    {
+        id: 'pr-1',
+        number: 1,
+        title: 'feat: Implement search functionality',
+        description: 'This PR adds a new search bar to the main page.',
+        sourceBranch: 'feature/search',
+        targetBranch: 'main',
+        status: 'open',
+        createdAt: now - 86400000 * 2,
+        updatedAt: now - 3600000,
+        conflicts: true,
+        reviewerIds: ['u2'],
+    },
+    {
+        id: 'pr-2',
+        number: 2,
+        title: 'fix: Correct typo in README',
+        description: 'A small but important fix.',
+        sourceBranch: 'fix/readme-typo',
+        targetBranch: 'main',
+        status: 'merged',
+        createdAt: now - 86400000 * 3,
+        updatedAt: now - 86400000,
+        reviewerIds: ['u1'],
+    }
+];
+const MOCK_COMMENTS: Comment[] = [
+    {
+        id: 'comment-1',
+        entityId: 'issue-1',
+        text: 'This has been completed.',
+        authorId: 'u1',
+        timestamp: now - 1000 * 60 * 29,
+    },
+    {
+        id: 'comment-2',
+        entityId: 'pr-1',
+        text: 'Could you add some tests for this?',
+        authorId: 'u2',
+        timestamp: now - 1800000,
+    }
+];
+const MOCK_ROLES: Record<string, Role> = {
+    'u1': 'admin',
+    'u2': 'editor',
+};
 const MOCK_REPOS: Repo[] = [
   {
     id: 'phoenix-project',
@@ -93,9 +140,12 @@ const MOCK_REPOS: Repo[] = [
     createdAt: now,
     updatedAt: now,
     defaultBranch: 'main',
-    branches: [MOCK_BRANCH_1],
+    branches: [MOCK_BRANCH_1, { name: 'feature/search', commitId: 'commit-1' }],
     commits: [MOCK_COMMIT_1],
     issues: [MOCK_ISSUE_1],
+    prs: MOCK_PRS,
+    comments: MOCK_COMMENTS,
+    roles: MOCK_ROLES,
   },
   {
     id: 'arbor-ui-kit',
@@ -138,6 +188,9 @@ const MOCK_REPOS: Repo[] = [
       }
     }],
     issues: [],
+    prs: [],
+    comments: [],
+    roles: { 'u1': 'admin' },
   }
 ];
 export const MOCK_ARBOR_REPOS = MOCK_REPOS;

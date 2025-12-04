@@ -76,6 +76,36 @@ export interface Issue {
   createdAt: number;
   updatedAt: number;
 }
+// --- Collaboration Types ---
+export type PRStatus = 'open' | 'merged' | 'closed';
+export interface PR {
+  id: string;
+  number: number;
+  title: string;
+  description?: string;
+  sourceBranch: string;
+  targetBranch: string;
+  status: PRStatus;
+  createdAt: number;
+  updatedAt: number;
+  conflicts?: boolean;
+  reviewerIds: string[];
+}
+export interface Comment {
+  id: string;
+  entityId: string; // Can be an issue ID or PR ID
+  text: string;
+  authorId: string;
+  timestamp: number;
+}
+export type Role = 'admin' | 'editor' | 'viewer';
+export interface Notification {
+  id: string;
+  type: 'pr' | 'issue' | 'comment';
+  message: string;
+  read: boolean;
+  timestamp: number;
+}
 export interface Repo {
   id: string;
   name: string;
@@ -87,6 +117,9 @@ export interface Repo {
   branches: Branch[];
   commits: Commit[];
   issues: Issue[];
+  prs: PR[];
+  comments: Comment[];
+  roles?: Record<string, Role>; // Maps userId to Role
 }
 // --- Storage & Sync Types ---
 export type StorageAdapterName = 'do' | 'local' | 'd1';
