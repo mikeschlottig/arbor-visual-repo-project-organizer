@@ -7,21 +7,17 @@ interface FileTreeProps {
   tree: VFSFolder;
   onSelectFile: (file: VFSFile) => void;
   selectedFileId?: string;
-  searchQuery?: string;
 }
-const FileTree: React.FC<FileTreeProps> = ({ tree, onSelectFile, selectedFileId, searchQuery }) => {
-  const filteredChildren = searchQuery
-    ? tree.children.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    : tree.children;
+const FileTree: React.FC<FileTreeProps> = ({ tree, onSelectFile, selectedFileId }) => {
   return (
     <div className="text-sm">
       <ul>
-        {filteredChildren.sort((a: FileNode, b: FileNode) => {
+        {tree.children.sort((a, b) => {
           if (a.type === 'folder' && b.type === 'file') return -1;
           if (a.type === 'file' && b.type === 'folder') return 1;
           return a.name.localeCompare(b.name);
         }).map(node => (
-          <Node key={node.id} node={node as FileNode} onSelectFile={onSelectFile} selectedFileId={selectedFileId} depth={0} searchQuery={searchQuery} />
+          <Node key={node.id} node={node} onSelectFile={onSelectFile} selectedFileId={selectedFileId} depth={0} />
         ))}
       </ul>
     </div>
@@ -32,10 +28,9 @@ interface NodeProps {
   onSelectFile: (file: VFSFile) => void;
   selectedFileId?: string;
   depth: number;
-  searchQuery?: string;
 }
-const Node: React.FC<NodeProps> = ({ node, onSelectFile, selectedFileId, depth, searchQuery }) => {
-  const [isOpen, setIsOpen] = useState(depth < 2 || !!searchQuery);
+const Node: React.FC<NodeProps> = ({ node, onSelectFile, selectedFileId, depth }) => {
+  const [isOpen, setIsOpen] = useState(depth < 2);
   const isFolder = node.type === 'folder';
   const isSelected = !isFolder && selectedFileId === node.id;
   const handleToggle = () => {
@@ -66,7 +61,7 @@ const Node: React.FC<NodeProps> = ({ node, onSelectFile, selectedFileId, depth, 
         <span className="truncate">{node.name}</span>
       </div>
       <AnimatePresence initial={false}>
-        {isFolder && isOpen && 'children' in node && Array.isArray((node as VFSFolder).children) && (
+        {isFolder && isOpen && (
           <motion.ul
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
@@ -79,7 +74,7 @@ const Node: React.FC<NodeProps> = ({ node, onSelectFile, selectedFileId, depth, 
                 if (a.type === 'file' && b.type === 'folder') return 1;
                 return a.name.localeCompare(b.name);
             }).map(child => (
-              <Node key={child.id} node={child as FileNode} onSelectFile={onSelectFile} selectedFileId={selectedFileId} depth={depth + 1} searchQuery={searchQuery} />
+              <Node key={child.id} node={child} onSelectFile={onSelectFile} selectedFileId={selectedFileId} depth={depth + 1} />
             ))}
           </motion.ul>
         )}
