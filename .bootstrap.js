@@ -80,7 +80,8 @@ function runSetupCommands() {
     const commands = [
     "bun add sql.js@^1.10.0",
     "bun add localforage@^1.10.0",
-    "bun add react-syntax-highlighter@^15.5.0"
+    "bun add react-syntax-highlighter@^15.5.0",
+    "bun install react-syntax-highlighter @types/react-syntax-highlighter"
 ];
     
     if (commands.length === 0) {
