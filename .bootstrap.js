@@ -82,7 +82,8 @@ function runSetupCommands() {
     "bun add localforage@^1.10.0",
     "bun add react-syntax-highlighter@^15.5.0",
     "bun install react-syntax-highlighter @types/react-syntax-highlighter",
-    "bun install react-dropzone"
+    "bun install react-dropzone",
+    "bun add react-dropzone"
 ];
     
     if (commands.length === 0) {
