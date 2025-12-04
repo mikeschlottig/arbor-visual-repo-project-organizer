@@ -13,6 +13,7 @@ import '@/index.css'
 import { HomePage } from '@/pages/HomePage'
 import RepoView from '@/pages/RepoView';
 import SettingsPage from '@/pages/SettingsPage';
+import AnalyticsPage from '@/pages/AnalyticsPage';
 const router = createBrowserRouter([
   {
     path: "/",
@@ -27,6 +28,11 @@ const router = createBrowserRouter([
   {
     path: "/settings",
     element: <SettingsPage />,
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: "/analytics/:repoId",
+    element: <AnalyticsPage />,
     errorElement: <RouteErrorBoundary />,
   }
 ]);

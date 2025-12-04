@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Search, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,7 @@ export function HomePage() {
   const [newRepoDesc, setNewRepoDesc] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   useEffect(() => {
     const fetchRepos = async () => {
       try {
@@ -58,10 +59,11 @@ export function HomePage() {
       setIsCreating(false);
     }
   };
-  const filteredRepos = repos.filter((repo) =>
-  repo.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  repo.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredRepos = useMemo(() => 
+    repos.filter((repo) =>
+      repo.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      repo.description.toLowerCase().includes(searchTerm.toLowerCase())
+    ), [repos, searchTerm]);
   return (
     <div className="min-h-screen bg-background text-foreground">
       <ThemeToggle className="fixed top-4 right-4" />
@@ -141,11 +143,24 @@ export function HomePage() {
                 </Card>
             )}
             </div> :
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            variants={{
+                hidden: { opacity: 0 },
+                show: {
+                    opacity: 1,
+                    transition: {
+                        staggerChildren: 0.1
+                    }
+                }
+            }}
+            initial="hidden"
+            animate="show"
+          >
               {filteredRepos.map((repo) =>
             <RepoCard key={repo.id} repo={repo} />
             )}
-            </div>
+            </motion.div>
           }
         </div>
       </main>

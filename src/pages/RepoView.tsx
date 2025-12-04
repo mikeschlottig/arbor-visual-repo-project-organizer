@@ -1,6 +1,6 @@
-import { useEffect, useState, useMemo } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { GitBranch, GitCommit, Tag, Home, Loader2, ChevronsUpDown, Plus, MessageSquare, GitPullRequest } from 'lucide-react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { GitBranch, GitCommit, Home, Loader2, ChevronsUpDown, Plus, Download, BarChart2, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { Toaster, toast } from 'sonner';
 import { api } from '@/lib/api-client';
@@ -19,9 +19,12 @@ import FileViewer from '@/components/FileViewer';
 import { NotificationBell } from '@/components/NotificationBell';
 import { PRList } from '@/components/PRList';
 import { PRModal } from '@/components/PRModal';
-import { MOCK_USERS } from '@shared/mock-data';interface BadgeProps {children?: React.ReactNode;className?: string;style?: React.CSSProperties;[key: string]: unknown;}interface BadgeProps {children?: React.ReactNode;className?: string;style?: React.CSSProperties;[key: string]: unknown;}interface BadgeProps {children?: React.ReactNode;className?: string;style?: React.CSSProperties;[key: string]: unknown;}interface BadgeProps {children?: React.ReactNode;className?: string;style?: React.CSSProperties;[key: string]: unknown;}
+import { MOCK_USERS } from '@shared/mock-data';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 export default function RepoView() {
-  const { repoId } = useParams<{repoId: string;}>();
+  const { repoId } = useParams<{ repoId: string }>();
+  const navigate = useNavigate();
   const [repo, setRepo] = useState<Repo | null>(null);
   const [currentBranch, setCurrentBranch] = useState<Branch | null>(null);
   const [currentCommit, setCurrentCommit] = useState<Commit | null>(null);
@@ -30,20 +33,21 @@ export default function RepoView() {
   const [isLoading, setIsLoading] = useState(true);
   const [branchPopoverOpen, setBranchPopoverOpen] = useState(false);
   const [isPRModalOpen, setIsPRModalOpen] = useState(false);
+  const [fileSearchQuery, setFileSearchQuery] = useState('');
   const [users] = useState<User[]>(MOCK_USERS);
-  const fetchRepoData = async () => {
+  const fetchRepoData = useCallback(async () => {
     if (!repoId) return;
     try {
       const repoData = await api<Repo>(`/api/repos/${repoId}`);
       setRepo(repoData);
-      if (!currentBranch) {
-        const mainBranch = repoData.branches.find((b) => b.name === repoData.defaultBranch);
-        if (mainBranch) {
-          setCurrentBranch(mainBranch);
-          const mainCommit = repoData.commits.find((c) => c.id === mainBranch.commitId);
-          if (mainCommit) {
-            setCurrentCommit(mainCommit);
-            setFileTree(mainCommit.tree);
+      if (!currentBranch || !repoData.branches.find(b => b.name === currentBranch.name)) {
+        const defaultBranch = repoData.branches.find((b) => b.name === repoData.defaultBranch) || repoData.branches[0];
+        if (defaultBranch) {
+          setCurrentBranch(defaultBranch);
+          const commit = repoData.commits.find((c) => c.id === defaultBranch.commitId);
+          if (commit) {
+            setCurrentCommit(commit);
+            setFileTree(commit.tree);
           }
         }
       }
@@ -53,14 +57,11 @@ export default function RepoView() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [repoId, currentBranch]);
   useEffect(() => {
     setIsLoading(true);
     fetchRepoData();
-  }, [repoId]);
-  const sortedCommits = useMemo(() => {
-    return repo?.commits.sort((a, b) => b.timestamp - a.timestamp) ?? [];
-  }, [repo]);
+  }, [repoId, fetchRepoData]);
   const handleBranchSelect = (branchName: string) => {
     const branch = repo?.branches.find((b) => b.name === branchName);
     if (branch && repo) {
@@ -89,6 +90,24 @@ export default function RepoView() {
       error: 'Failed to merge pull request.'
     });
   };
+  const handleExport = async () => {
+    if (!repo) return;
+    try {
+        const data = await api<Repo>(`/api/repos/${repo.id}/export`, { method: 'POST' });
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${repo.name}-export.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        toast.success('Repository data exported successfully!');
+    } catch (error) {
+        toast.error('Failed to export repository data.');
+    }
+  };
   if (isLoading) {
     return (
       <div className="p-4 max-w-7xl mx-auto">
@@ -97,8 +116,8 @@ export default function RepoView() {
           <Skeleton className="w-64 h-full" />
           <Skeleton className="flex-1 h-full" />
         </div>
-      </div>);
-
+      </div>
+    );
   }
   if (!repo) {
     return <div className="p-8 text-center">Repository not found.</div>;
@@ -114,6 +133,8 @@ export default function RepoView() {
           </BreadcrumbList>
         </Breadcrumb>
         <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={handleExport}><Download className="h-4 w-4 mr-2" /> Export</Button>
+            <Button variant="ghost" size="sm" onClick={() => navigate(`/analytics/${repo.id}`)}><BarChart2 className="h-4 w-4 mr-2" /> Analytics</Button>
             <NotificationBell repo={repo} />
             <ThemeToggle className="relative top-0 right-0" />
         </div>
@@ -139,8 +160,14 @@ export default function RepoView() {
                 <Plus className="mr-2 h-4 w-4" /> New Pull Request
               </Button>
             </div>
+            <div className="px-2 pb-2">
+                <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input placeholder="Search files..." className="pl-8" value={fileSearchQuery} onChange={e => setFileSearchQuery(e.target.value)} />
+                </div>
+            </div>
             <div className="border-t mt-2 pt-2 flex-grow"><ScrollArea className="h-full">
-                {fileTree ? <FileTreeComponent tree={fileTree} onSelectFile={setSelectedFile} selectedFileId={selectedFile?.id} /> : <div className="p-4 text-sm text-muted-foreground">No files in this commit.</div>}
+                {fileTree ? <FileTreeComponent tree={fileTree} onSelectFile={setSelectedFile} selectedFileId={selectedFile?.id} searchQuery={fileSearchQuery} /> : <div className="p-4 text-sm text-muted-foreground">No files in this commit.</div>}
             </ScrollArea></div>
           </ResizablePanel>
           <ResizableHandle withHandle />
@@ -163,5 +190,4 @@ export default function RepoView() {
       <PRModal isOpen={isPRModalOpen} onOpenChange={setIsPRModalOpen} repo={repo} onPRCreated={handlePRCreated} />
       <Toaster richColors />
     </div>);
-
 }

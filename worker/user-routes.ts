@@ -2,7 +2,15 @@ import { Hono } from "hono";
 import type { Env } from './core-utils';
 import { UserEntity, ChatBoardEntity, RepoEntity } from "./entities";
 import { ok, bad, notFound, isStr } from './core-utils';
-import type { Commit, FileTree, Repo, SyncQueueItem, PR, Comment } from "@shared/types";
+import type { Commit, FileTree, Repo, SyncQueueItem, PR, Comment, VFSFile, VFSFolder, FileNode } from "@shared/types";
+const flattenTree = (node: FileNode, allFiles: VFSFile[] = []): VFSFile[] => {
+    if (node.type === 'file') {
+        allFiles.push(node as VFSFile);
+    } else if (node.type === 'folder' && 'children' in node) {
+        (node as VFSFolder).children.forEach(child => flattenTree(child, allFiles));
+    }
+    return allFiles;
+};
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
   app.get('/api/test', (c) => c.json({ success: true, data: { name: 'CF Workers Demo' }}));
   // USERS
@@ -124,6 +132,40 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     if (!await repo.hasPermission(userId, 'editor')) return bad(c, 'Permission denied');
     const comment = await repo.addComment(entityId, text, userId);
     return ok(c, comment);
+  });
+  // --- AI & Search Routes ---
+  app.get('/api/repos/search', async (c) => {
+    const q = c.req.query('q')?.toLowerCase();
+    if (!q) return bad(c, 'Query parameter "q" is required');
+    await RepoEntity.ensureSeed(c.env);
+    const allRepos = await RepoEntity.list(c.env, null, 1000); // Fetch all for local filtering
+    const results = allRepos.items.filter(r => 
+        r.name.toLowerCase().includes(q) || 
+        r.description.toLowerCase().includes(q) ||
+        r.tags.some(t => t.toLowerCase().includes(q))
+    );
+    return ok(c, results.slice(0, 20));
+  });
+  app.post('/api/repos/:id/export', async (c) => {
+    const repo = new RepoEntity(c.env, c.req.param('id'));
+    if (!await repo.exists()) return notFound(c);
+    const state = await repo.getState();
+    return ok(c, state);
+  });
+  app.get('/api/repos/:id/files/search', async (c) => {
+    const q = c.req.query('q')?.toLowerCase();
+    if (!q) return ok(c, []);
+    const repo = new RepoEntity(c.env, c.req.param('id'));
+    if (!await repo.exists()) return notFound(c);
+    const state = await repo.getState();
+    const latestCommit = state.commits.sort((a,b) => b.timestamp - a.timestamp)[0];
+    if (!latestCommit) return ok(c, []);
+    const allFiles = flattenTree(latestCommit.tree);
+    const matches = allFiles.filter(f => 
+        f.name.toLowerCase().includes(q) || 
+        (f.contentPreview || '').toLowerCase().includes(q)
+    );
+    return ok(c, matches.slice(0, 50));
   });
   // --- Sync Routes ---
   app.post('/api/sync', async (c) => {

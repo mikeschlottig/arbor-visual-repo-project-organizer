@@ -2,7 +2,8 @@ import { useRouteError, isRouteErrorResponse } from 'react-router-dom';
 import { useEffect } from 'react';
 import { errorReporter } from '@/lib/errorReporter';
 import { ErrorFallback } from './ErrorFallback';
-function ErrorDisplay({ error }: { error: unknown }) {
+export function RouteErrorBoundary() {
+  const error = useRouteError();
   useEffect(() => {
     if (error) {
       let errorMessage = 'Unknown route error';
@@ -48,8 +49,4 @@ function ErrorDisplay({ error }: { error: unknown }) {
       statusMessage="Routing error detected"
     />
   );
-}
-export function RouteErrorBoundary() {
-  const error = useRouteError();
-  return <ErrorDisplay error={error} />;
 }
