@@ -1,6 +1,6 @@
 # Arbor — Visual Repo & Project Organizer
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/mikeschlottig/arbor-visual-repo-project-organizer)
 
 ## Overview
 
@@ -132,7 +132,7 @@ Deploy to Cloudflare Workers for edge performance and global distribution. The p
 
 4. For custom domains or advanced config: Edit `wrangler.jsonc` (but avoid changing bindings/migrations).
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/mikeschlottig/arbor-visual-repo-project-organizer)
 
 ### Environment Variables
 No custom vars needed initially; Durable Objects handle state. For production, set secrets via `wrangler secret put <KEY>`.
